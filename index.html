@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Route Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <h1>My Route Planner</h1>
+    <form id="route-form">
+        <input type="text" id="source" placeholder="Enter source address">
+        <input type="text" id="destination" placeholder="Enter destination address">
+        <button type="submit">Get Route</button>
+    </form>
+    <div id="map" style="height: 600px;"></div>
+
+    <script>
+    var map = L.map('map').setView([20.5937, 78.9629], 5); // Coordinates for India
+    L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains:['mt0','mt1','mt2','mt3']
+    }).addTo(map);
+    L.control.scale().addTo(map);
+    L.imageOverlay('/static/north-arrow.png', [[0, 0], [1, 1]]).addTo(map);
+
+    $('#route-form').submit(function(e) {
+        e.preventDefault();
+
+        var source = $('#source').val();
+        var destination = $('#destination').val();
+
+        $.post('/get_route', {source: source, destination: destination}, function(data) {
+            var data = JSON.parse(data);
+            var coords = data['features'][0]['geometry']['coordinates'];
+            var latlngs = coords.map(function(coord) { return [coord[1], coord[0]]; });
+
+            L.polyline(latlngs, {color: 'blue'}).addTo(map);
+            map.fitBounds(latlngs);
+        });
+    });
+    </script>
+</body>
+</html>
